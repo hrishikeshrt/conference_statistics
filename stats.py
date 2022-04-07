@@ -59,9 +59,9 @@ BIN_COUNTS = {
 
 VIEW_COLORS = {
     "all": "lightseagreen",
-    "accept_all": "green",
-    "accept_long": "seagreen",
     "accept_short": "palegreen",
+    "accept_long": "seagreen",
+    "accept": "green",
     "reject": "indianred",
 }
 
@@ -114,7 +114,7 @@ def plot_attribute(
     view_count = len(view_colors)
 
     for view_name, view_color in view_colors.items():
-        print(histograms[hist_name][view_name])
+        print("HIST", histograms[hist_name][view_name])
         heights, bins = histograms[hist_name][view_name]
         width = (bins[1] - bins[0]) / (view_count + 1)
         ax.bar(
@@ -124,6 +124,8 @@ def plot_attribute(
             facecolor=view_color,
             label=view_name,
         )
+        # if hist_name in ["created_at", "modified_at"]:
+        #     pass
         curr_start += width
 
     plt.legend(title="View")
@@ -166,7 +168,6 @@ def main():
     number_of_bins = args["bins"] or BIN_COUNTS[attribute]
     plot_views = args.get("views", None)
 
-
     # read into dataframe
     df = sqlite_to_dataframe(database_file, SELECT_QUERY)
 
@@ -204,7 +205,7 @@ def main():
     views = {
         "accept_long": df.query("status == 'Long'"),
         "accept_short": df.query("status == 'Short'"),
-        "accept_all": df.query("status in ['Long', 'Short']"),
+        "accept": df.query("status in ['Long', 'Short']"),
         "reject": df.query("status in ['Reject', 'Desk Reject']"),
     }
 
@@ -224,13 +225,16 @@ def main():
                 heights, bins = histograms[hist_name][view_name]
                 all_heights, _ = histograms[hist_name]["all"]
                 normalized_histograms[hist_name][view_name] = (
-                    heights / all_heights,
-                    bins
+                    heights / all_heights * 100,
+                    bins,
                 )
         histograms = normalized_histograms
 
     plot_attribute(
-        histograms, attribute, is_normalized=normalize, plot_views=plot_views
+        histograms,
+        hist_name=attribute,
+        is_normalized=normalize,
+        plot_views=plot_views,
     )
 
     return 0
