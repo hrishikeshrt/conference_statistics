@@ -1,6 +1,6 @@
 # Conference Statistics
 
-Generate and plot statistics about papers accepted at a conference
+Generate and plot statistics about papers at a conference
 
 ## Usage
 
@@ -12,7 +12,7 @@ Conference Statistics
 
 positional arguments:
   attribute             Attribute to plot
-    {number_of_words_in_title,number_of_chars_in_title,number_of_words_in_abstract,is_student_paper,submission_id,created_at}
+    {number_of_words_in_title,number_of_chars_in_title,number_of_words_in_abstract,number_of_authors,is_student_paper,submission_id,created_at}
 
 optional arguments:
   -h, --help            show this help message and exit

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Apr 07 11:13:27 2022
+Conference Statistics
+---------------------
+Generate and plot statistics about papers at a conference
 
 @author: Hrishikesh Terdalkar
 """
@@ -18,42 +20,21 @@ from matplotlib.ticker import FixedLocator
 
 ###############################################################################
 
-PAPERS_FILE = "Papers.csv"
-DATABASE_FILE = "dasfaa22.db"
+PAPERS_FILE = "papers.csv"
+DATABASE_FILE = "submissions.db"
 SELECT_QUERY = "SELECT * FROM submissions"
 
 ###############################################################################
-
-SCHEMA = """
-CREATE TABLE submissions
-(
-    id integer primary key,
-    created datetime,
-    modified datetime,
-    title varchar(150),
-    abstract varchar(2000),
-    subj1 varchar(100),
-    subj2 varchar(100),
-    status char(2),
-    metareviewer varchar(50),
-    student varchar(3),
-    sessionid integer default 0,
-    sessiontitle varchar(100),
-    slot integer,
-    track integer
-);
-"""
-
-###############################################################################
+# Default Configurations
 
 BIN_COUNTS = {
+    "created_at": 5,
+    "submission_id": 5,
+    "number_of_authors": 5,
     "number_of_words_in_title": 5,
     "number_of_chars_in_title": 5,
     "number_of_words_in_abstract": 5,
-    "number_of_authors": 5,
     "is_student_paper": 2,
-    "submission_id": 5,
-    "created_at": 5,
     # "modified_at": 5,
     # "country": 5,
 }
@@ -69,13 +50,15 @@ VIEW_COLORS = {
 ###############################################################################
 
 
-def create_bins(df, bin_counts):
-    bins = {}
-    for column_name, bin_count in bin_counts.items():
-        bins[column_name] = df.groupby(
-            pd.cut(df[column_name], bin_count)
-        ).size()
-    return bins
+def sqlite_to_dataframe(input_file, sqlite_query):
+    """Read Results of an SQLite Query into a Pandas DataFrame"""
+    con = sqlite3.connect(input_file)
+    df = pd.read_sql_query(sqlite_query, con)
+    con.close()
+    return df
+
+
+###############################################################################
 
 
 def create_numpy_histograms(df, bin_counts):
@@ -83,17 +66,6 @@ def create_numpy_histograms(df, bin_counts):
     for column_name, bin_count in bin_counts.items():
         histograms[column_name] = np.histogram(df[column_name], bin_count)
     return histograms
-
-
-###############################################################################
-
-
-def sqlite_to_dataframe(input_file, sqlite_query):
-    """Read Results of an SQLite Query into a Pandas DataFrame"""
-    con = sqlite3.connect(input_file)
-    df = pd.read_sql_query(sqlite_query, con)
-    con.close()
-    return df
 
 
 ###############################################################################
@@ -159,10 +131,10 @@ def plot_attribute(
     plt.legend(title="View", fontsize=8)
     if is_normalized:
         plt.ylabel("Percentage")
-        plt.title(f"Percentage per bin on '{hist_name}'", fontsize=12)
+        plt.title(f"Percentages per bin on '{hist_name}'", fontsize=10)
     else:
         plt.ylabel("Count")
-        plt.title(f"Counts per bin on '{hist_name}'", fontsize=12)
+        plt.title(f"Counts per bin on '{hist_name}'", fontsize=10)
 
     plt.show()
 
@@ -192,7 +164,9 @@ def main():
     )
     args = vars(parser.parse_args())
 
+    # ----------------------------------------------------------------------- #
     # parse arguments
+
     database_file = args["database"]
     papers_file = args["papers"]
     attribute = args["attribute"]
@@ -200,10 +174,13 @@ def main():
     number_of_bins = args["bins"] or BIN_COUNTS[attribute]
     plot_views = args.get("views", None)
 
+    # ----------------------------------------------------------------------- #
     # read into dataframe
     df = sqlite_to_dataframe(database_file, SELECT_QUERY)
 
+    # ----------------------------------------------------------------------- #
     # prepare dataframe
+
     df["number_of_words_in_title"] = df["title"].apply(
         lambda x: len(x.split())
     )
@@ -222,24 +199,29 @@ def main():
         lambda x: dt.strptime(x, "%m/%d/%Y %H:%M:%S %p %z").timestamp()
     )
 
-    # # information about accepted papers
+    # read papers file for authors details
     papers = pd.read_csv(papers_file)
     papers["number_of_authors"] = papers["Authors"].apply(
         lambda x: x.count(";") + 1
     )
     df = df.merge(papers, left_on="id", right_on="Paper ID", how="left")
 
-    bin_counts = BIN_COUNTS.copy()
-    bin_counts[attribute] = number_of_bins
-    overall_histograms = create_numpy_histograms(df, bin_counts)
-
+    # ----------------------------------------------------------------------- #
     # views
+
     views = {
         "accept_long": df.query("status == 'Long'"),
         "accept_short": df.query("status == 'Short'"),
         "accept": df.query("status in ['Long', 'Short']"),
         "reject": df.query("status in ['Reject', 'Desk Reject']"),
     }
+
+    # ----------------------------------------------------------------------- #
+    # generate histograms
+
+    bin_counts = BIN_COUNTS.copy()
+    bin_counts[attribute] = number_of_bins
+    overall_histograms = create_numpy_histograms(df, bin_counts)
 
     histograms = {}
     for hist_name, (_heights, _bins) in overall_histograms.items():
@@ -261,6 +243,9 @@ def main():
                     bins,
                 )
         histograms = normalized_histograms
+
+    # ----------------------------------------------------------------------- #
+    # plot
 
     plot_attribute(
         histograms,
