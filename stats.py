@@ -14,6 +14,7 @@ from datetime import datetime as dt
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FixedLocator
 
 ###############################################################################
 
@@ -101,6 +102,7 @@ def sqlite_to_dataframe(input_file, sqlite_query):
 def plot_attribute(
     histograms, hist_name, is_normalized=False, plot_views=None
 ):
+    """Plot histogram of the specified attribute"""
     fig, ax = plt.subplots()
     view_colors = VIEW_COLORS.copy()
 
@@ -114,28 +116,50 @@ def plot_attribute(
     view_count = len(view_colors)
 
     for view_name, view_color in view_colors.items():
-        print("HIST", histograms[hist_name][view_name])
+        print(
+            f"histograms[{hist_name}][{view_name}]:",
+            histograms[hist_name][view_name],
+        )
         heights, bins = histograms[hist_name][view_name]
         width = (bins[1] - bins[0]) / (view_count + 1)
-        ax.bar(
+        rects = ax.bar(
             bins[:-1] + curr_start,
             heights,
             width=width,
             facecolor=view_color,
             label=view_name,
         )
-        # if hist_name in ["created_at", "modified_at"]:
-        #     pass
+        for rect in rects:
+            height = rect.get_height()
+            ax.text(
+                rect.get_x() + rect.get_width() / 2.0,
+                height * 1.01,
+                f"{height:.1f}",
+                fontsize=6,
+                ha="center",
+                va="bottom",
+                alpha=0.5,
+            )
+
         curr_start += width
 
-    plt.legend(title="View")
-    plt.xlabel(hist_name)
+    if hist_name in ["created_at", "modified_at"]:
+        xticks = [
+            dt.fromtimestamp(x).strftime("%Y-%m-%d %H:%M")
+            for x in ax.get_xticks()
+        ]
+        ax.xaxis.set_major_locator(FixedLocator(ax.get_xticks()))
+        ax.set_xticklabels(xticks, fontsize=6, rotation=30)
+
+    plt.legend(title="View", fontsize=8)
     if is_normalized:
         plt.ylabel("Percentage")
-        plt.title(f"Percentage per bin on '{hist_name}'", fontsize=16)
+        plt.title(f"Percentage per bin on '{hist_name}'", fontsize=12)
     else:
         plt.ylabel("Count")
-        plt.title(f"Counts per bin on '{hist_name}'", fontsize=16)
+        plt.title(f"Counts per bin on '{hist_name}'", fontsize=12)
+
+    plt.subplots_adjust(bottom=0.15)
     plt.show()
 
 
