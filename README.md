@@ -1,6 +1,6 @@
-# DASFAA Statistics
+# Conference Statistics
 
-Generate and plot statistics about accepted papers at DASFAA 2022
+Generate and plot statistics about papers accepted at a conference
 
 ## Usage
 
@@ -8,7 +8,7 @@ Generate and plot statistics about accepted papers at DASFAA 2022
 usage: stats.py [-h] [--views] [--normalize] [--bins BINS] [--database DATABASE]
                 {attribute}
 
-DASFAA Statistics
+Conference Statistics
 
 positional arguments:
   attribute             Attribute to plot

@@ -173,7 +173,7 @@ def plot_attribute(
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="DASFAA Statistics")
+    parser = argparse.ArgumentParser(description="Conference Statistics")
     parser.add_argument(
         "attribute", help="Attribute to plot", choices=list(BIN_COUNTS)
     )
