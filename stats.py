@@ -51,7 +51,7 @@ BIN_COUNTS = {
     "number_of_chars_in_title": 5,
     "number_of_words_in_abstract": 5,
     # "number_of_authors": 2,
-    # "is_student_paper": 2,
+    "is_student_paper": 2,
     "submission_id": 5,
     "created_at": 5,
     # "modified_at": 5,
@@ -150,6 +150,11 @@ def plot_attribute(
         ]
         ax.xaxis.set_major_locator(FixedLocator(ax.get_xticks()))
         ax.set_xticklabels(xticks, fontsize=6, rotation=30)
+        plt.subplots_adjust(bottom=0.15)
+
+    if hist_name in ["is_student_paper"]:
+        ax.xaxis.set_major_locator(FixedLocator([0.15, 0.65]))
+        ax.set_xticklabels(["No", "Yes"], fontsize=8)
 
     plt.legend(title="View", fontsize=8)
     if is_normalized:
@@ -159,7 +164,6 @@ def plot_attribute(
         plt.ylabel("Count")
         plt.title(f"Counts per bin on '{hist_name}'", fontsize=12)
 
-    plt.subplots_adjust(bottom=0.15)
     plt.show()
 
 
