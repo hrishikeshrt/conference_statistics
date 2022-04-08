@@ -50,7 +50,7 @@ BIN_COUNTS = {
     "number_of_words_in_title": 5,
     "number_of_chars_in_title": 5,
     "number_of_words_in_abstract": 5,
-    # "number_of_authors": 2,
+    "number_of_authors": 5,
     "is_student_paper": 2,
     "submission_id": 5,
     "created_at": 5,
@@ -187,10 +187,14 @@ def main():
     parser.add_argument(
         "--database", help="Database File", default=DATABASE_FILE
     )
+    parser.add_argument(
+        "--papers", help="List of all papers", default=PAPERS_FILE
+    )
     args = vars(parser.parse_args())
 
     # parse arguments
     database_file = args["database"]
+    papers_file = args["papers"]
     attribute = args["attribute"]
     normalize = args["normalize"]
     number_of_bins = args["bins"] or BIN_COUNTS[attribute]
@@ -219,11 +223,11 @@ def main():
     )
 
     # # information about accepted papers
-    # papers = pd.read_csv(PAPERS_FILE)
-    # papers["number_of_authors"] = papers["Authors"].apply(
-    #     lambda x: x.count(";") + 1
-    # )
-    # df.merge(papers, left_on="id", right_on="Paper ID", how="left")
+    papers = pd.read_csv(papers_file)
+    papers["number_of_authors"] = papers["Authors"].apply(
+        lambda x: x.count(";") + 1
+    )
+    df = df.merge(papers, left_on="id", right_on="Paper ID", how="left")
 
     bin_counts = BIN_COUNTS.copy()
     bin_counts[attribute] = number_of_bins
